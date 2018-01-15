@@ -1,19 +1,49 @@
 #include "parse.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+static const uint16_t FILE_LINE_MAX = 1000;
+static const uint8_t FILE_MAX_LINES = 255;
+
+/************************/
+/*** Create Functions ***/
+/************************/
+
+static json_object * gahoodson_create_json_object(char *, int);
+
+json_object * gahoodson_create(const char *json_file) {
+    FILE *file = fopen(json_file, "rb");
+    if(file != NULL) {
+        char buffer[FILE_LINE_MAX];
+        char str[FILE_LINE_MAX * FILE_MAX_LINES];
+        strcpy(str, ""); 
+        while(fgets(buffer, FILE_LINE_MAX, file) != NULL) {
+            strcat(str, buffer);
+        }
+        printf("%s\n", str);
+        fclose(file);
+        return gahoodson_create_json_object(str, 0);
+    }
+    else {
+        printf("Error: File not found.\n");
+        return NULL;
+    }
+}
+
+json_object * gahoodson_create_json_object(char *file_str, int index) {
+    return NULL;
+}
+
+/**************************/
+/*** Deleting Functions ***/
+/**************************/
 
 static void gahoodson_delete_json_obj(json_object *);
 static void gahoodson_delete_json_list(json_list *);
+static void gahoodson_delete_json_list_element(json_list_element *);
 static void gahoodson_delete_json_pair(json_pair *);
-
 static void gahoodson_delete_json_str(json_string *);
-
-json_object * gahoodson_create(const char *pathToJson) {
-    json_object *obj = NULL;
-    int i = 0;
-    while(pathToJson[i] != '\0') continue;
-    return obj;
-}
 
 void gahoodson_delete(json_object *json) {
     gahoodson_delete_json_obj(json);
@@ -64,7 +94,45 @@ void gahoodson_delete_json_obj(json_object *obj) {
 
 void gahoodson_delete_json_list(json_list *list) {
     if(list == NULL) return;
+    
+    int i;
+
+    if(list->elements != NULL) {
+        for(i = 0; i < list->num_of_elements; i++) {
+            gahoodson_delete_json_list_element(list->elements[i]);
+        }
+        free(list->elements);
+        list->elements = NULL;
+        list->num_of_elements = 0;
+    }
+
     free(list);
+}
+
+void gahoodson_delete_json_list_element(json_list_element *element) {
+    if(element == NULL) return;
+
+    int i;
+
+    if(element->json_pairs != NULL) {
+        for(i = 0; i < element->num_of_pairs; i++) {
+            gahoodson_delete_json_pair(element->json_pairs[i]);
+        }
+        free(element->json_pairs);
+        element->json_pairs = NULL;
+        element->num_of_pairs = 0;
+    }
+
+    if(element->json_objects != NULL) {
+        for(i = 0; i < element->num_of_objects; i++) {
+            gahoodson_delete_json_obj(element->json_objects[i]);
+        }
+        free(element->json_objects);
+        element->json_objects = NULL;
+        element->num_of_objects = 0;
+    }
+
+    free(element);
 }
 
 void gahoodson_delete_json_pair(json_pair *pair) {
