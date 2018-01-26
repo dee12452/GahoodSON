@@ -1,0 +1,5 @@
+{
+    "testBool" : true,
+    "testInt" : 10,
+    "testStr" : "hello"
+}

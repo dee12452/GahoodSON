@@ -53,6 +53,8 @@ typedef struct _JSON_List_Element {
 
 /* JSON List (Array of pairs and objects) */
 typedef struct _JSON_List {
+    json_string *key;
+    
     json_list_element **elements;
     int num_of_elements;
 } json_list;
@@ -71,12 +73,23 @@ struct _JSON_Obj {
     int num_of_subobjects;
 };
 
+typedef struct _JSON {
+    json_pair **pairs;
+    int num_of_pairs;
+
+    json_list **json_lists;
+    int num_of_lists;
+
+    struct _JSON_Obj **objects;
+    int num_of_objects;
+} json;
+
 /**********************/
 /*** End JSON Types ***/
 /**********************/
 
 /* Constructor / Destructor */
-json_object * gahoodson_create(const char *json);
-void gahoodson_delete(json_object *json);
+json * gahoodson_create(const char *json);
+void gahoodson_delete(json *obj);
 
 #endif
