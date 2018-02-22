@@ -1,5 +1,22 @@
 {
     "testBool" : true,
     "testInt" : 10,
-    "testStr" : "hello"
+    "testStr" : "hello",
+    "testList" : [
+        {
+            "testListInt" : 1,
+            "testListBool" : true,
+            "testListStr" : "Str"
+        },
+        {
+            "testListInt" : 2,
+            "testListBool" : true,
+            "testListStr" : "Str2"
+        },
+        {
+            "testListInt" : 3,
+            "testListBool" : false,
+            "testListStr" : "Str3"
+        }
+    ]
 }
