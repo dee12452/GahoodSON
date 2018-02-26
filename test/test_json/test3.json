@@ -1,0 +1,31 @@
+{
+    "OAB" : {
+        "idk way" : [
+            {
+                "abc" : "123"
+            },
+            {
+                "abc" : 123
+            }
+        ],
+        "OABOAB" : {
+        },
+        "hi" : "oh hi",
+        "false" : false,
+        "OABOABOAB" : {
+            "OABOABOABOAB" : {
+                "dont" : "do this",
+                "ok" : true
+            },
+            "intg" : 657
+        },
+        "random list" : [
+            {
+                "a" : "a"
+            }, 
+            {
+                "b" : "b"
+            }
+        ]
+    }
+}

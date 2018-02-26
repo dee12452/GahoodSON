@@ -266,8 +266,8 @@ json * gahoodson_create(const char *json_file) {
         return gahoodson_create_json(str, &index);
     }
     else {
-        printf("Error: File not found.\n");
-        return NULL;
+        printf("Critical Error: File \"%s\" not found.\n", json_file);
+        exit(EXIT_FAILURE);
     }
 }
 
