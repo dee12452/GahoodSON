@@ -2,21 +2,59 @@
     "testBool" : true,
     "testInt" : 10,
     "testStr" : "hello",
+    "testObj" : {
+        "testObjInt" : 1,
+        "testObjStr" : "testStrObj",
+        "testObjObj" : {
+            "testObjObjList" : [
+                {
+                    "TestObjObjListInt" : 11
+                },
+                {
+                    "TestObjObjListInt" : 21
+                }
+            ]
+        }
+    },
     "testList" : [
         {
             "testListInt" : 1,
             "testListBool" : true,
-            "testListStr" : "Str"
+            "testListStr" : "Str",
+            "testListList" : [
+                {
+                    "TestListListInt" : 11
+                },
+                {
+                    "TestListListInt" : 21
+                }
+            ]
         },
         {
             "testListInt" : 2,
             "testListBool" : true,
-            "testListStr" : "Str2"
+            "testListStr" : "Str2",
+            "testListList" : [
+                {
+                    "TestListListInt" : 12
+                },
+                {
+                    "TestListListInt" : 22
+                }
+            ]
         },
         {
             "testListInt" : 3,
             "testListBool" : false,
-            "testListStr" : "Str3"
+            "testListStr" : "Str3",
+            "testListList" : [
+                {
+                    "TestListListInt" : 13
+                },
+                {
+                    "TestListListInt" : 23
+                }
+            ]
         }
     ]
 }

@@ -42,22 +42,27 @@ typedef struct _JSON_Pair {
 
 typedef struct _JSON_Obj json_object;
 
+typedef struct _JSON_List json_list;
+
 /* JSON List Element (contains pairs and objects) */
 typedef struct _JSON_List_Element {
     json_object **json_objects;
     int num_of_objects;
+    
+    json_list **json_lists;
+    int num_of_lists;
 
     json_pair **json_pairs;
     int num_of_pairs;
 } json_list_element;
 
 /* JSON List (Array of pairs and objects) */
-typedef struct _JSON_List {
+struct _JSON_List {
     json_string *key;
     
     json_list_element **elements;
     int num_of_elements;
-} json_list;
+};
 
 /* JSON Object defined by key (Contains lists and data types) */
 struct _JSON_Obj {
