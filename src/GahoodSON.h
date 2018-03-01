@@ -33,6 +33,14 @@
  *   Good Luck! ^_^ I hope this library serves you well!
  *
  * */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "parse.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
