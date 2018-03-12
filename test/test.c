@@ -12,8 +12,11 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     json *obj = gahoodson_create(argv[1]);
+    printf("Printing %d pairs\n", obj->num_of_pairs);
     print_pairs(obj->pairs, obj->num_of_pairs, 0);
+    printf("Printing %d objs\n", obj->num_of_objects);
     print_objects(obj->objects, obj->num_of_objects, 0);
+    printf("Printing %d lists\n", obj->num_of_lists);
     print_lists(obj->json_lists, obj->num_of_lists, 0);
     gahoodson_delete(obj);
     printf("\n");

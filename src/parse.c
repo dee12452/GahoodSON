@@ -53,7 +53,10 @@ json_string * create_string(char *text, int *index) {
         j_string->val = str; j_string->size = size;
         return j_string;
     }
-    while(text[*index] != '"' && text[*index - 1] != '\\' && size < FILE_LINE_MAX) {
+    while(size < FILE_LINE_MAX) {
+        if(*index > 0 && text[*index] == '"' && text[*index - 1] != '\\') {
+            break;
+        }
         char buf[2];
         buf[0] = text[*index];
         buf[1] = '\0';
@@ -222,6 +225,15 @@ void gahoodson_delete_json_list_element(json_list_element *element) {
         element->num_of_objects = 0;
     }
 
+    if(element->json_lists != NULL) {
+        for(i = 0; i < element->num_of_lists; i++) {
+            gahoodson_delete_json_list(element->json_lists[i]);
+        }
+        free(element->json_lists);
+        element->json_lists = NULL;
+        element->num_of_lists = 0;
+    }
+
     free(element);
 }
 
@@ -260,7 +272,6 @@ json * gahoodson_create(const char *json_file) {
         while(fgets(buffer, FILE_LINE_MAX, file) != NULL) {
             strcat(str, buffer);
         }
-        printf("%s\n", str);
         fclose(file);
         int index = 0;
         return gahoodson_create_json(str, &index);
@@ -285,7 +296,9 @@ json * gahoodson_create_json(char *file_str, int *index) {
             if(skip_past_char(file_str, index, ':') == FALSE) {
                 gahoodson_delete_json_str(key); break;
             }
-            while(file_str[*index] == ' ') (*index)++;
+
+            /* Using ASCII values, anything below a space could be some weird indentation */
+            while(file_str[*index] <= ' ') (*index)++;
             
             /* Found another object */
             if(file_str[*index] == '{') {
@@ -370,7 +383,9 @@ json_object * gahoodson_get_next_object(json_string *key, char *file_str, int *i
             if(skip_past_char(file_str, index, ':') == FALSE) {
                 gahoodson_delete_json_str(new_key); break;
             }
-            while(file_str[*index] == ' ') (*index)++;
+            
+            /* Using ASCII values, anything below a space could be some weird indentation */
+            while(file_str[*index] <= ' ') (*index)++;
             
             /* Found another object */
             if(file_str[*index] == '{') {
