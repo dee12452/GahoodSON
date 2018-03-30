@@ -2,6 +2,9 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+void print_bool(json_bool *, int);
+void print_str(json_string *, int);
+void print_int(json_int *, int);
 void print_lists(json_list **, int, int);
 void print_objects(json_object **, int, int);
 void print_pairs(json_pair **, int, int);
@@ -23,9 +26,38 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+void print_bool(json_bool *boolean, int subset) {
+    if(boolean == NULL) return;
+    int j;
+    for(j = 0; j < subset; j++) printf(" ");
+    if(boolean->val == 0) {
+        printf("bool : false\n");
+    }
+    else {
+        printf("bool : true\n");
+    }
+}
+
+void print_int(json_int *int_val, int subset) {
+    if(int_val == NULL) return;
+    int j;
+    for(j = 0; j < subset; j++) printf(" ");
+    printf("int : %d\n", int_val->val);
+}
+
+void print_str(json_string *str_val, int subset) {
+    if(str_val == NULL) return;
+    int j;
+    for(j = 0; j < subset; j++) printf(" ");
+    printf("string : %s\n", str_val->val);
+}
+
 void print_list_elements(json_list_element **elements, int size, int subset) {
     int i;
     for(i = 0; i < size; i++) {
+        print_bool(elements[i]->bool_val, subset + 1);
+        print_int(elements[i]->int_val, subset + 1);
+        print_str(elements[i]->str_val, subset + 1);
         print_pairs(elements[i]->json_pairs, elements[i]->num_of_pairs, subset + 1);
         print_objects(elements[i]->json_objects, elements[i]->num_of_objects, subset + 1);
         print_lists(elements[i]->json_lists, elements[i]->num_of_lists, subset + 1);

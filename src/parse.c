@@ -207,6 +207,19 @@ void gahoodson_delete_json_list_element(json_list_element *element) {
 
     int i;
 
+    if(element->bool_val != NULL) {
+        free(element->bool_val);
+        element->bool_val = NULL;
+    }
+    if(element->int_val != NULL) {
+        free(element->int_val);
+        element->int_val = NULL;
+    }
+    if(element->str_val != NULL) {
+        gahoodson_delete_json_str(element->str_val);
+        element->str_val = NULL;
+    }
+
     if(element->json_pairs != NULL) {
         for(i = 0; i < element->num_of_pairs; i++) {
             gahoodson_delete_json_pair(element->json_pairs[i]);
@@ -463,14 +476,10 @@ json_list * gahoodson_get_next_list(json_string *key, char *file_str, int *index
     
     (*index)++;
     while(file_str[*index] != ']') {
-        while(file_str[*index] != '{') {
-            if(file_str[*index] == ']') {
-                break;
-            }
+        while(file_str[*index] <= ' ' || file_str[*index] == ',') {
             (*index)++;
         }
         if(file_str[*index] != ']') {
-            (*index)++;
             list->num_of_elements++;
             if(list->num_of_elements >= INITIAL_LIST_ELEMENTS_GUESS * times_passed_guess) {
                 times_passed_guess++;
@@ -506,81 +515,107 @@ json_list_element * gahoodson_get_next_list_element(char *file_str, int *index) 
     element->num_of_lists = 0; element->json_lists = NULL;
     element->num_of_objects = 0; element->json_objects = NULL;
     element->num_of_pairs = 0; element->json_pairs = NULL;
+    element->bool_val = NULL; element->int_val = NULL; element->str_val = NULL;
 
-    while(file_str[*index] != '}') {
-        while(file_str[*index] != '"') {
-            if(file_str[*index] == '}') break;
+    if(file_str[*index] == 't' || file_str[*index] == 'f') {
+        element->bool_val = file_str[*index] == 't'
+            ? create_bool(TRUE)
+            : create_bool(FALSE);
+        while(file_str[*index] >= 'a' && file_str[*index] <= 'z') {
             (*index)++;
-        }
-        if(file_str[*index] == '"') {
-            (*index)++;
-            json_string *key = create_string(file_str, index);
-            if(skip_past_char(file_str, index, ':') == FALSE) {
-                gahoodson_delete_json_str(key); break;
-            }
-            while(file_str[*index] == ' ') (*index)++;
-            
-            /* Found an object */
-            if(file_str[*index] == '{') {
-                if(element->json_objects == NULL) element->json_objects = (json_object **) malloc(sizeof(json_object *) * INITIAL_LIST_ELEMENT_OBJS);
-                element->num_of_objects++;
-                if(element->num_of_objects >= INITIAL_LIST_ELEMENT_OBJS * objs_realloc) {
-                    objs_realloc++;
-                    json_object **temp = (json_object **) realloc(element->json_objects, sizeof(json_object *) * INITIAL_LIST_ELEMENT_OBJS * objs_realloc);
-                    if(temp != NULL) {
-                        element->json_objects = temp;
-                        temp = NULL;
-                    }
-                    else {
-                        printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                element->json_objects[element->num_of_objects - 1] = gahoodson_get_next_object(key, file_str, index); 
-            }
-
-            /* Found another list */
-            else if(file_str[*index] == '[') { 
-                if(element->json_lists == NULL) element->json_lists = (json_list **) malloc(sizeof(json_list *) * INITIAL_LIST_ELEMENT_OBJS);
-                element->num_of_lists++;
-                if(element->num_of_lists >= INITIAL_LIST_ELEMENT_OBJS * lists_realloc) {
-                    lists_realloc++;
-                    json_list **temp = (json_list **) realloc(element->json_lists, sizeof(json_list *) * INITIAL_LIST_ELEMENT_OBJS * lists_realloc);
-                    if(temp != NULL) {
-                        element->json_lists = temp;
-                        temp = NULL;
-                    }
-                    else {
-                        printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                element->json_lists[element->num_of_lists - 1] = gahoodson_get_next_list(key, file_str, index); 
-            }
-
-            /* Found a pair */
-            else { 
-                if(element->json_pairs == NULL) element->json_pairs = (json_pair **) malloc(sizeof(json_pair *) * INITIAL_LIST_ELEMENT_OBJS);
-                element->num_of_pairs++;
-                if(element->num_of_pairs >= INITIAL_LIST_ELEMENT_OBJS * pairs_realloc) {
-                    pairs_realloc++;
-                    json_pair **temp = (json_pair **) realloc(element->json_pairs, sizeof(json_pair *) * INITIAL_LIST_ELEMENT_OBJS * pairs_realloc);
-                    if(temp != NULL) {
-                        element->json_pairs = temp;
-                        temp = NULL;
-                    }
-                    else {
-                        printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                element->json_pairs[element->num_of_pairs - 1] = gahoodson_get_next_pair(key, file_str, index); 
-            }
-            
-            key = NULL;
         }
     }
-    (*index)++;
+    else if(file_str[*index] == '"') {
+        (*index)++;
+        element->str_val = create_string(file_str, index);
+    }
+    else if(file_str[*index] >= '0' && file_str[*index] <= '9') {
+        int value = file_str[*index] - '0';
+        (*index)++;
+        while(file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) {
+            value *= 10;
+            value += file_str[*index] - '0';
+            (*index)++;
+        }
+        element->int_val = create_int(value);
+    }
+    else if(file_str[*index] == '{') {
+        (*index)++;
+        while(file_str[*index] != '}') {
+            while(file_str[*index] != '"') {
+                if(file_str[*index] == '}') break;
+                (*index)++;
+            }
+            if(file_str[*index] == '"') {
+                (*index)++;
+                json_string *key = create_string(file_str, index);
+                if(skip_past_char(file_str, index, ':') == FALSE) {
+                    gahoodson_delete_json_str(key); break;
+                }
+                while(file_str[*index] == ' ') (*index)++;
+                
+                /* Found an object */
+                if(file_str[*index] == '{') {
+                    if(element->json_objects == NULL) element->json_objects = (json_object **) malloc(sizeof(json_object *) * INITIAL_LIST_ELEMENT_OBJS);
+                    element->num_of_objects++;
+                    if(element->num_of_objects >= INITIAL_LIST_ELEMENT_OBJS * objs_realloc) {
+                        objs_realloc++;
+                        json_object **temp = (json_object **) realloc(element->json_objects, sizeof(json_object *) * INITIAL_LIST_ELEMENT_OBJS * objs_realloc);
+                        if(temp != NULL) {
+                            element->json_objects = temp;
+                            temp = NULL;
+                        }
+                        else {
+                            printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    element->json_objects[element->num_of_objects - 1] = gahoodson_get_next_object(key, file_str, index); 
+                }
+
+                /* Found another list */
+                else if(file_str[*index] == '[') { 
+                    if(element->json_lists == NULL) element->json_lists = (json_list **) malloc(sizeof(json_list *) * INITIAL_LIST_ELEMENT_OBJS);
+                    element->num_of_lists++;
+                    if(element->num_of_lists >= INITIAL_LIST_ELEMENT_OBJS * lists_realloc) {
+                        lists_realloc++;
+                        json_list **temp = (json_list **) realloc(element->json_lists, sizeof(json_list *) * INITIAL_LIST_ELEMENT_OBJS * lists_realloc);
+                        if(temp != NULL) {
+                            element->json_lists = temp;
+                            temp = NULL;
+                        }
+                        else {
+                            printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    element->json_lists[element->num_of_lists - 1] = gahoodson_get_next_list(key, file_str, index); 
+                }
+
+                /* Found a pair */
+                else { 
+                    if(element->json_pairs == NULL) element->json_pairs = (json_pair **) malloc(sizeof(json_pair *) * INITIAL_LIST_ELEMENT_OBJS);
+                    element->num_of_pairs++;
+                    if(element->num_of_pairs >= INITIAL_LIST_ELEMENT_OBJS * pairs_realloc) {
+                        pairs_realloc++;
+                        json_pair **temp = (json_pair **) realloc(element->json_pairs, sizeof(json_pair *) * INITIAL_LIST_ELEMENT_OBJS * pairs_realloc);
+                        if(temp != NULL) {
+                            element->json_pairs = temp;
+                            temp = NULL;
+                        }
+                        else {
+                            printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    element->json_pairs[element->num_of_pairs - 1] = gahoodson_get_next_pair(key, file_str, index); 
+                }
+                
+                key = NULL;
+            }
+        }
+        (*index)++;
+    }
 
     return element;
 }

@@ -46,6 +46,10 @@ typedef struct _JSON_List json_list;
 
 /* JSON List Element (contains pairs and objects) */
 typedef struct _JSON_List_Element {
+    json_string *str_val;
+    json_int *int_val;
+    json_bool *bool_val;
+    
     json_object **json_objects;
     int num_of_objects;
     
