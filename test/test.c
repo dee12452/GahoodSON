@@ -1,6 +1,7 @@
 #include "../src/GahoodSON.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void print_bool(json_bool *, int);
 void print_str(json_string *, int);
@@ -9,12 +10,26 @@ void print_lists(json_list **, int, int);
 void print_objects(json_object **, int, int);
 void print_pairs(json_pair **, int, int);
 
+static const char *TEST_JSON = "{ \"pair1\" : 10000, \"pair2\" : \"this is a pair string\", \"pair3\" : false }";
+
 int main(int argc, char **argv) {
     if(argc != 2) {
         printf("Incorrect Arguments passed: Needed one file path and nothing else\n");
         exit(EXIT_FAILURE);
     }
-    json *obj = gahoodson_create(argv[1]);
+    json *obj = gahoodson_create_from_file(argv[1]);
+    printf("Printing %d pairs\n", obj->num_of_pairs);
+    print_pairs(obj->pairs, obj->num_of_pairs, 0);
+    printf("Printing %d objs\n", obj->num_of_objects);
+    print_objects(obj->objects, obj->num_of_objects, 0);
+    printf("Printing %d lists\n", obj->num_of_lists);
+    print_lists(obj->json_lists, obj->num_of_lists, 0);
+    gahoodson_delete(obj);
+    printf("\n");
+
+    char test_json[255];
+    strcpy(test_json, TEST_JSON);
+    obj = gahoodson_create_from_string(test_json);
     printf("Printing %d pairs\n", obj->num_of_pairs);
     print_pairs(obj->pairs, obj->num_of_pairs, 0);
     printf("Printing %d objs\n", obj->num_of_objects);

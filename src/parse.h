@@ -98,7 +98,8 @@ typedef struct _JSON {
 /**********************/
 
 /* Constructor / Destructor */
-json * gahoodson_create(const char *json);
+json * gahoodson_create_from_file(const char *json_file);
+json * gahoodson_create_from_string(char *json_str);
 void gahoodson_delete(json *obj);
 
 #endif

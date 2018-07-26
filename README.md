@@ -5,8 +5,13 @@ GahoodSON is a very minimal JSON parser written in C. It is intended to be a fas
 ## How to use GahoodSON
  - To Create a json object that contains all of the data,
  call the following: 
-       
-       json * <variable_name_here> = gahoodson_create(<file_path_here>);
+
+ ```
+       json * <variable_name_here> = gahoodson_create_from_file(<file_path_here>);
+       json * <variable_name_here> = gahoodson_create_from_string(<passed_json_string>);
+
+ ```
+
 
     That will create a variable with all of the information stored in order as it appears.
  

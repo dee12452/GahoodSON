@@ -15,7 +15,7 @@ static const uint16_t FILE_LINE_MAX = 1000;
 static const uint8_t FILE_MAX_LINES = 255;
 
 /* Skip one char past the given character */
-uint8_t skip_past_char(char *text, int *index, char target) {
+static uint8_t skip_past_char(char *text, int *index, char target) {
     while(text[*index] != target 
             && text[*index] != '\0'
             && text[*index] != EOF) (*index)++;
@@ -24,15 +24,8 @@ uint8_t skip_past_char(char *text, int *index, char target) {
     return result;
 }
 
-/* Skip to the index of the given character */
-uint8_t find_char(char *text, int *index, char target) {
-    int result = skip_past_char(text, index, target);
-    (*index)--;
-    return result;
-}
-
 /* Runs through the string and checks equality to the comparator */
-uint8_t equals_string(char *text, int *index, const char *compare) {
+static uint8_t equals_string(char *text, int *index, const char *compare) {
     int iterator = 0;
     while(text[*index] == compare[iterator] 
             && compare[iterator] != '\0'
@@ -271,12 +264,12 @@ void gahoodson_delete_json_str(json_string *str) {
 /************************/
 
 static json * gahoodson_create_json(char *, int *);
-static json_object * gahoodson_get_next_object(json_string *key, char *, int *);
-static json_list * gahoodson_get_next_list(json_string *key, char *, int *);
+static json_object * gahoodson_get_next_object(json_string *, char *, int *);
+static json_list * gahoodson_get_next_list(json_string *, char *, int *);
 static json_list_element * gahoodson_get_next_list_element(char *, int *);
-static json_pair * gahoodson_get_next_pair(json_string *key, char *, int *);
+static json_pair * gahoodson_get_next_pair(json_string *, char *, int *);
 
-json * gahoodson_create(const char *json_file) {
+json * gahoodson_create_from_file(const char *json_file) {
     FILE *file = fopen(json_file, "rb");
     if(file != NULL) {
         char buffer[FILE_LINE_MAX];
@@ -295,7 +288,12 @@ json * gahoodson_create(const char *json_file) {
     }
 }
 
-json * gahoodson_create_json(char *file_str, int *index) {
+json * gahoodson_create_from_string(char *json_str) {
+    int index = 0;
+    return gahoodson_create_json(json_str, &index);
+}
+
+json * gahoodson_create_json(char *json_str, int *index) {
     json *obj = (json *) malloc(sizeof(json));
     const int INITIAL_OBJ_ELEMENT_OBJS = 10;
     int objs_realloc = 1, lists_realloc = 1, pairs_realloc = 1;
@@ -303,18 +301,18 @@ json * gahoodson_create_json(char *file_str, int *index) {
     obj->num_of_lists = 0; obj->json_lists = NULL;
     obj->num_of_pairs = 0; obj->pairs = NULL;
     
-    if(skip_past_char(file_str, index, '{') == TRUE) {
-        while(skip_past_char(file_str, index, '"') == TRUE) {
-            json_string *key = create_string(file_str, index);
-            if(skip_past_char(file_str, index, ':') == FALSE) {
+    if(skip_past_char(json_str, index, '{') == TRUE) {
+        while(skip_past_char(json_str, index, '"') == TRUE) {
+            json_string *key = create_string(json_str, index);
+            if(skip_past_char(json_str, index, ':') == FALSE) {
                 gahoodson_delete_json_str(key); break;
             }
 
             /* Using ASCII values, anything below a space could be some weird indentation */
-            while(file_str[*index] <= ' ') (*index)++;
+            while(json_str[*index] <= ' ') (*index)++;
             
             /* Found another object */
-            if(file_str[*index] == '{') {
+            if(json_str[*index] == '{') {
                 if(obj->objects == NULL) obj->objects = (json_object **) malloc(sizeof(json_object *) * INITIAL_OBJ_ELEMENT_OBJS);
                 obj->num_of_objects++;
                 if(obj->num_of_objects >= INITIAL_OBJ_ELEMENT_OBJS * objs_realloc) {
@@ -329,11 +327,11 @@ json * gahoodson_create_json(char *file_str, int *index) {
                         exit(EXIT_FAILURE);
                     }
                 }
-                obj->objects[obj->num_of_objects - 1] = gahoodson_get_next_object(key, file_str, index); 
+                obj->objects[obj->num_of_objects - 1] = gahoodson_get_next_object(key, json_str, index); 
             }
 
             /* Found a list */
-            else if(file_str[*index] == '[') { 
+            else if(json_str[*index] == '[') { 
                 if(obj->json_lists == NULL) obj->json_lists = (json_list **) malloc(sizeof(json_list *) * INITIAL_OBJ_ELEMENT_OBJS);
                 obj->num_of_lists++;
                 if(obj->num_of_lists >= INITIAL_OBJ_ELEMENT_OBJS * lists_realloc) {
@@ -348,7 +346,7 @@ json * gahoodson_create_json(char *file_str, int *index) {
                         exit(EXIT_FAILURE);
                     }
                 }
-                obj->json_lists[obj->num_of_lists - 1] = gahoodson_get_next_list(key, file_str, index); 
+                obj->json_lists[obj->num_of_lists - 1] = gahoodson_get_next_list(key, json_str, index); 
             }
 
             /* Found a pair */
@@ -367,7 +365,7 @@ json * gahoodson_create_json(char *file_str, int *index) {
                         exit(EXIT_FAILURE);
                     }
                 }
-                obj->pairs[obj->num_of_pairs - 1] = gahoodson_get_next_pair(key, file_str, index); 
+                obj->pairs[obj->num_of_pairs - 1] = gahoodson_get_next_pair(key, json_str, index); 
             }
             
             key = NULL;
