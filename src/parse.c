@@ -270,6 +270,11 @@ static json_list_element * gahoodson_get_next_list_element(char *, int *);
 static json_pair * gahoodson_get_next_pair(json_string *, char *, int *);
 
 json * gahoodson_create_from_file(const char *json_file) {
+    if(json_file == NULL)
+    {
+        return NULL;
+    }
+
     FILE *file = fopen(json_file, "rb");
     if(file != NULL) {
         char buffer[FILE_LINE_MAX];
@@ -289,6 +294,11 @@ json * gahoodson_create_from_file(const char *json_file) {
 }
 
 json * gahoodson_create_from_string(char *json_str) {
+    if(json_str == NULL)
+    {
+        return NULL;
+    }
+
     int index = 0;
     return gahoodson_create_json(json_str, &index);
 }
