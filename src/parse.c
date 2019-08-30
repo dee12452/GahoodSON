@@ -560,7 +560,7 @@ json_list_element * gahoodson_get_next_list_element(char *file_str, int *index) 
                 if(skip_past_char(file_str, index, ':') == FALSE) {
                     gahoodson_delete_json_str(key); break;
                 }
-                while(file_str[*index] == ' ') (*index)++;
+                while(file_str[*index] <= ' ') (*index)++;
                 
                 /* Found an object */
                 if(file_str[*index] == '{') {
