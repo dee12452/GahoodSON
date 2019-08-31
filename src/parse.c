@@ -640,7 +640,13 @@ json_pair * gahoodson_get_next_pair(json_string *key, char *file_str, int *index
         (*index)++;
         pair->str_val = create_string(file_str, index);
     }
-    else if(file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) { 
+    else if((file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) || file_str[*index] == '-') {
+        unsigned char negative = file_str[*index] == '-' ? 1 : 0;
+
+        if(negative) {
+            (*index)++;
+        }
+
         /* int val */
         int value = file_str[*index] - '0';
         (*index)++;
@@ -649,6 +655,8 @@ json_pair * gahoodson_get_next_pair(json_string *key, char *file_str, int *index
             value += file_str[*index] - '0';
             (*index)++;
         }
+
+        if(negative) value *= -1;
         pair->int_val = create_int(value);
     }
     else {
