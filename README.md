@@ -2,6 +2,17 @@
 
 GahoodSON is a very minimal JSON parser written in C. It is intended to be a fast cross-platform solution to parsing JSON files for any given application.
 
+# Install
+
+On a Unix-based environment, just use cmake and make to create the library binary.
+```
+cmake . && make
+```
+This will produce the libGahoodSON.a binary that you can now include in your project. Make sure to grab `src/\*.h` and throw them into your include folders.
+
+On windows, you will follow the same step, but the output will be a different file. 
+
+
 ## How to use GahoodSON
  - To Create a json object that contains all of the data,
  call the following: 
