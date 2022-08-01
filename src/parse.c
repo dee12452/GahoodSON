@@ -1,7 +1,8 @@
-#include "parse.h"
+#include <GahoodSON.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -13,6 +14,17 @@
 
 static const uint16_t FILE_LINE_MAX = 1000;
 static const uint8_t FILE_MAX_LINES = 255;
+
+static char skip_to_next_marker(char *text, int *index) {
+    while(text[*index] != '\0'
+          && text[*index] != EOF) {
+        if(text[*index] == '{' || text[*index] == '[') {
+            return text[*index];
+        }
+        (*index)++;
+    }
+    return '\0';
+}
 
 /* Skip one char past the given character */
 static uint8_t skip_past_char(char *text, int *index, char target) {
@@ -84,6 +96,12 @@ json_int * create_int(int val) {
     json_int *integer = (json_int *) malloc(sizeof(json_int));
     integer->val = val;
     return integer;
+}
+
+json_float * create_float(float val) {
+    json_float *float_val = (json_float *) malloc(sizeof(json_float));
+    float_val->val = val;
+    return float_val;
 }
 
 /**************************/
@@ -212,6 +230,10 @@ void gahoodson_delete_json_list_element(json_list_element *element) {
         gahoodson_delete_json_str(element->str_val);
         element->str_val = NULL;
     }
+    if(element->float_val != NULL) {
+        free(element->float_val);
+        element->float_val = NULL;
+    }
 
     if(element->json_pairs != NULL) {
         for(i = 0; i < element->num_of_pairs; i++) {
@@ -248,6 +270,7 @@ void gahoodson_delete_json_pair(json_pair *pair) {
     gahoodson_delete_json_str(pair->str_val);
     if(pair->int_val != NULL) free(pair->int_val);
     if(pair->bool_val != NULL) free(pair->bool_val);
+    if(pair->float_val != NULL) free(pair->float_val);
 }
 
 void gahoodson_delete_json_str(json_string *str) {
@@ -310,8 +333,9 @@ json * gahoodson_create_json(char *json_str, int *index) {
     obj->num_of_objects = 0; obj->objects = NULL;
     obj->num_of_lists = 0; obj->json_lists = NULL;
     obj->num_of_pairs = 0; obj->pairs = NULL;
-    
-    if(skip_past_char(json_str, index, '{') == TRUE) {
+
+    const char first_marker = skip_to_next_marker(json_str, index);
+    if(first_marker == '{') {
         while(skip_past_char(json_str, index, '"') == TRUE) {
             json_string *key = create_string(json_str, index);
             if(skip_past_char(json_str, index, ':') == FALSE) {
@@ -380,6 +404,25 @@ json * gahoodson_create_json(char *json_str, int *index) {
             
             key = NULL;
         }
+    }
+    else if(first_marker == '[') {
+        if(obj->json_lists == NULL) obj->json_lists = (json_list **) malloc(sizeof(json_list *) * INITIAL_OBJ_ELEMENT_OBJS);
+        obj->num_of_lists++;
+        if(obj->num_of_lists >= INITIAL_OBJ_ELEMENT_OBJS * lists_realloc) {
+            lists_realloc++;
+            json_list **temp = (json_list **) realloc(obj->json_lists, sizeof(json_list *) * INITIAL_OBJ_ELEMENT_OBJS * lists_realloc);
+            if(temp != NULL) {
+                obj->json_lists = temp;
+                temp = NULL;
+            }
+            else {
+                printf("CRITICAL ERROR: Failed to make more memory for JSON parsing. Aborting parser.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        obj->json_lists[obj->num_of_lists - 1] = gahoodson_get_next_list(NULL, json_str, index);
+    } else {
+        // Malformed JSON, don't return an error, just return the empty json.
     }
     return obj;
 }
@@ -523,7 +566,7 @@ json_list_element * gahoodson_get_next_list_element(char *file_str, int *index) 
     element->num_of_lists = 0; element->json_lists = NULL;
     element->num_of_objects = 0; element->json_objects = NULL;
     element->num_of_pairs = 0; element->json_pairs = NULL;
-    element->bool_val = NULL; element->int_val = NULL; element->str_val = NULL;
+    element->bool_val = NULL; element->int_val = NULL; element->str_val = NULL; element->float_val = NULL;
 
     if(file_str[*index] == 't' || file_str[*index] == 'f') {
         element->bool_val = file_str[*index] == 't'
@@ -537,7 +580,13 @@ json_list_element * gahoodson_get_next_list_element(char *file_str, int *index) 
         (*index)++;
         element->str_val = create_string(file_str, index);
     }
-    else if(file_str[*index] >= '0' && file_str[*index] <= '9') {
+    else if(file_str[*index] == '-' || (file_str[*index] >= '0' && file_str[*index] <= '9')) {
+        uint8_t negative = FALSE;
+        if(file_str[*index] == '-') {
+            negative = TRUE;
+            (*index)++;
+        }
+
         int value = file_str[*index] - '0';
         (*index)++;
         while(file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) {
@@ -545,7 +594,32 @@ json_list_element * gahoodson_get_next_list_element(char *file_str, int *index) 
             value += file_str[*index] - '0';
             (*index)++;
         }
-        element->int_val = create_int(value);
+        if(file_str[*index] == '.') {
+            (*index)++;
+            int decimal_place = 0;
+            float float_value = (float) value;
+            while(file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) {
+                float next_decimal_div = 10;
+                int div;
+                for(div = 0; div < decimal_place; div++) {
+                    next_decimal_div *= 10;
+                }
+                float next_decimal = (float) file_str[*index] - '0';
+                next_decimal /= next_decimal_div;
+                float_value += next_decimal;
+                (*index)++;
+                decimal_place++;
+            }
+            if(negative == TRUE) {
+                float_value *= -1;
+            }
+            element->float_val = create_float(float_value);
+        } else {
+            if(negative == TRUE) {
+                value *= -1;
+            }
+            element->int_val = create_int(value);
+        }
     }
     else if(file_str[*index] == '{') {
         (*index)++;
@@ -634,6 +708,7 @@ json_pair * gahoodson_get_next_pair(json_string *key, char *file_str, int *index
     pair->str_val = NULL;
     pair->int_val = NULL;
     pair->bool_val = NULL;
+    pair->float_val = NULL;
 
     if(file_str[*index] == '"') { 
         /* string val */
@@ -655,9 +730,30 @@ json_pair * gahoodson_get_next_pair(json_string *key, char *file_str, int *index
             value += file_str[*index] - '0';
             (*index)++;
         }
-
-        if(negative) value *= -1;
-        pair->int_val = create_int(value);
+        if(file_str[*index] == '.') {
+            (*index)++;
+            int decimal_place = 0;
+            float float_value = (float) value;
+            while(file_str[*index] - '0' < 10 && file_str[*index] - '0' >= 0) {
+                float next_decimal_div = 10;
+                int div;
+                for(div = 0; div < decimal_place; div++) {
+                    next_decimal_div *= 10;
+                }
+                float next_decimal = (float) file_str[*index] - '0';
+                next_decimal /= next_decimal_div;
+                float_value += next_decimal;
+                (*index)++;
+                decimal_place++;
+            }
+            if(negative == TRUE) {
+                float_value *= -1;
+            }
+            pair->float_val = create_float(float_value);
+        } else {
+            if(negative) value *= -1;
+            pair->int_val = create_int(value);
+        }
     }
     else {
         /* bool val */

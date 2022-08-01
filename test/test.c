@@ -1,7 +1,9 @@
-#include "../src/GahoodSON.h"
+#include <GahoodSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void unit_test();
 
 void print_bool(json_bool *, int);
 void print_str(json_string *, int);
@@ -12,20 +14,103 @@ void print_pairs(json_pair **, int, int);
 
 int main(int argc, char **argv) {
     if(argc != 2) {
-        printf("Incorrect Arguments passed: Needed one file path and nothing else\n");
-        exit(EXIT_FAILURE);
+        printf("Running unit tests...\n");
+        unit_test();
+    } else {
+        printf("Printing metrics for json file: %s\n", argv[1]);
+        json *obj = gahoodson_create_from_file(argv[1]);
+        printf("Printing %d pairs\n", obj->num_of_pairs);
+        print_pairs(obj->pairs, obj->num_of_pairs, 0);
+        printf("Printing %d objs\n", obj->num_of_objects);
+        print_objects(obj->objects, obj->num_of_objects, 0);
+        printf("Printing %d lists\n", obj->num_of_lists);
+        print_lists(obj->json_lists, obj->num_of_lists, 0);
+        gahoodson_delete(obj);
+        printf("\n");
     }
-    json *obj = gahoodson_create_from_file(argv[1]);
-    printf("Printing %d pairs\n", obj->num_of_pairs);
-    print_pairs(obj->pairs, obj->num_of_pairs, 0);
-    printf("Printing %d objs\n", obj->num_of_objects);
-    print_objects(obj->objects, obj->num_of_objects, 0);
-    printf("Printing %d lists\n", obj->num_of_lists);
-    print_lists(obj->json_lists, obj->num_of_lists, 0);
-    gahoodson_delete(obj);
-    printf("\n");
 
     return 0;
+}
+
+void unit_test() {
+    /********************
+     * Test file 3 tests
+     ********************/
+    const char* test_file3 = "test_json/test3.json";
+    json *obj = gahoodson_create_from_file(test_file3);
+
+    if(obj->num_of_objects != 1) {
+        printf("TEST FAILURE: expected num objects 1, got %d\n", obj->num_of_objects);
+        exit(EXIT_FAILURE);
+    }
+
+    const char* abc1 = obj->objects[0]->json_lists[0]->elements[0]->json_pairs[0]->str_val->val;
+    const int abc2 = obj->objects[0]->json_lists[0]->elements[1]->json_pairs[0]->int_val->val;
+    if(strcmp(abc1, "123")) {
+        printf("TEST FAILURE: expected abc1 string pair to equal \"abc\", got \"%s\"\n", abc1);
+        exit(EXIT_FAILURE);
+    }
+    if(abc2 != 123) {
+        printf("TEST FAILURE: expected abc2 to equal 123, got %d\n", abc2);
+        exit(EXIT_FAILURE);
+    }
+
+    json_pair** pairs = obj->objects[0]->pairs;
+    int i;
+    uint8_t checked = 0;
+    for(i = 0; i < obj->objects[0]->num_of_pairs; i++) {
+        if(strcmp("false", pairs[i]->key->val)) {
+            continue;
+        }
+        checked = 1;
+        if(pairs[i]->bool_val->val != 0) {
+            printf("TEST FAILURE: expected pair \"false\" to equal 0 (false), got %d\n", pairs[i]->bool_val->val);
+            exit(EXIT_FAILURE);
+        }
+    }
+    if(checked == 0) {
+        printf("TEST FAILURE: failed to find target pair: \"false\"\n");
+        exit(EXIT_FAILURE);
+    }
+
+    gahoodson_delete(obj);
+
+
+    /********************
+     * Test file 7 tests
+     ********************/
+    const char* test_file7 = "test_json/test7.json";
+    obj = gahoodson_create_from_file(test_file7);
+
+    if(obj->num_of_objects != 0 || obj->num_of_pairs != 0 || obj->num_of_lists != 1) {
+        printf("TEST FAILURE: Invalid stats gathered for file 7: objs=%d, pairs=%d, lists=%d\n",
+               obj->num_of_objects,
+               obj->num_of_pairs,
+               obj->num_of_lists
+               );
+        exit(EXIT_FAILURE);
+    }
+
+    const float floatVal1 = obj->json_lists[0]->elements[0]->json_pairs[0]->float_val->val;
+    const float floatVal2 = obj->json_lists[0]->elements[1]->json_pairs[0]->float_val->val;
+    const float floatVal3 = obj->json_lists[0]->elements[2]->json_pairs[0]->float_val->val;
+    if(floatVal1 != 0.0) {
+        printf("TEST FAILURE: failed to parse float value properly: expected ABOUT 0 got %f\n", floatVal1);
+        exit(EXIT_FAILURE);
+    }
+    if(floatVal2 > -2.09 || floatVal2 < -2.11) {
+        printf("TEST FAILURE: failed to parse float value properly: expected ABOUT -2.1 got %f\n", floatVal2);
+        exit(EXIT_FAILURE);
+    }
+    if(floatVal3 > 3.257 || floatVal3 < 3.255) {
+        printf("TEST FAILURE: failed to parse float value properly: expected ABOUT 3.256 got %f\n", floatVal3);
+        exit(EXIT_FAILURE);
+    }
+
+    gahoodson_delete(obj);
+
+    printf("ALL TESTS PASSED\n");
+    exit(EXIT_SUCCESS);
 }
 
 void print_bool(json_bool *boolean, int subset) {

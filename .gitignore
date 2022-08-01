@@ -7,3 +7,7 @@ CMakeFiles/
 Makefile
 *.cmake
 *.a
+*.idea/
+cmake-build-debug/
+
+!test/Makefile
