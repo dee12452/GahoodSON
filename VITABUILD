@@ -1,0 +1,18 @@
+pkgname=GahoodSON
+pkgver=1.3.0
+pkgrel=1
+url="https://github/dee12452/GahoodSON"
+source=("https://github.com/dee12452/GahoodSON/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd GahoodSON-$pkgver
+  mkdir build && cd build
+  cmake .. $CMARGS -DCMAKE_INSTALL_PREFIX=$prefix 
+  make -j$(nproc)
+}
+
+package () {
+  cd GahoodSON-$pkgver/build
+  make DESTDIR=$pkgdir install
+}
