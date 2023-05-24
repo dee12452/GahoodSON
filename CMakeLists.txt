@@ -5,6 +5,6 @@ include_directories(./include)
 add_library(GahoodSON STATIC ./src/parse.c)
 
 install(
-	DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include" 
-	DESTINATION include
+	DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/GahoodSON" 
+	DESTINATION GahoodSON
 )
