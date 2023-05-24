@@ -1,4 +1,4 @@
-#include <GahoodSON.h>
+#include <GahoodSON/GahoodSON.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
