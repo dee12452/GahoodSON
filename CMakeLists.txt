@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 project(GahoodSON)
 
-include_directories(./include)
-add_library(GahoodSON STATIC ./src/parse.c)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+add_library(GahoodSON STATIC ${PROJECT_SOURCE_DIR}/src/parse.c)
 
 install(TARGETS GahoodSON
         LIBRARY DESTINATION lib
